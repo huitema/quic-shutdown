@@ -1,0 +1,188 @@
+---
+title: Quic Shutdown Warning Extension
+abbrev: QUIC-SHUTDOWN
+docname: draft-huitema-quic-shutdown-00
+category: exp
+date: 2021
+
+stand_alone: yes
+
+ipr: trust200902
+area: Transport
+kw: Internet-Draft
+
+coding: us-ascii
+pi: [toc, sortrefs, symrefs, comments]
+
+author:
+      -
+        ins: C. Huitema
+        name: Christian Huitema
+        org: Private Octopus Inc.
+        street: 427 Golfcourse Rd
+        city: Friday Harbor
+        code: WA 98250
+        country: U.S.A
+        email: huitema@huitema.net
+
+--- abstract
+
+QUIC servers sometimes need to shutdown and restart, for example as part of a
+planned update. The SHUTDOWN_WARNING frame can be sent by Quic servers to
+inform clients of the imminent shutdown and its planned delay.
+Clients can then orderly close the current connection and possibly migrate
+to a new one. The draft defines the SHUTDOWN_WARNING frame and the "shutdown_warning"
+transport parameter for negotiating the use of this extension frame.
+
+--- middle
+
+# Introduction
+
+The QUIC Transport Protocol {{!I-D.ietf-quic-transport}} provides a
+secure, multiplexed connection for transmitting reliable streams of
+application data. 
+
+TODO: tell us about what
+
+## Terms and Definitions
+
+The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in BCP 14 {{!RFC2119}} {{!RFC8174}}
+when, and only when, they appear in all capitals, as shown here.
+
+# Specification
+
+The shutdown_warning transport parameter used for negotiating the use
+of the extension frame
+is defined in {{negotiation}}. The SHUTDOWN_WARNING frame format is defined
+in {{SHUTDOWN_WARNING-format}}.
+
+## Negotiation {#negotiation}
+
+The use of the SHUTDOWN_WARNING frame extension is negotiated using a transport
+parameter:
+
+shutdown_warning (TBD):
+
+: The shutdown_warning transport parameter is included by clients which
+  wants to receive the SHUTDOWN_WARNING frames for this connection, and
+  by servers that are willing to send that frame. This parameter is a
+  zero-length value.
+
+The negotiation is successful if both peers include the shutdown_warning
+parameter in their list of transport parameters.
+
+### Zero RTT and Shutdown Warning Option
+
+Implementations MUST NOT remember the value of the shutdown_warning 
+parameter and try to use it when attempting 0-RTT on subsequent connections.
+This rules is in line with the suggestions in section 7.4.2 of {{!I-D.ietf-quic-transport}}
+to adopt conservative defaults and avoid compatibility issues. It is also
+consistent with the specification to only allow servers to send SHUTDOWN_WARNING frames,
+and to only allow sending these frames in 1RTT packets, see {{sending}}.
+
+## SHUTDOWN_WARNING frame format {#SHUTDOWN_WARNING-format}
+
+A server endpoint uses a SHUTDOWN_WARNING frame (type=TBD) to communicate
+the imminent shutdown of the connection.
+
+SHUTDOWN_WARNING frames are formatted as shown in {{fig-stop-sending}}.
+
+~~~
+STOP_SENDING Frame {
+  Type (i) = TBD,
+  Delay (i),
+  Application Protocol Error Code (i),
+  Reason Phrase Length (i),
+  Reason Phrase (..),
+}
+~~~
+{: #fig-shutdown-warning title="SHUTDOWN_WARNING Frame Format"}
+
+SHUTDOWN_WARNING frames contain the following fields:
+
+Delay:
+: A variable length integer encoding the delay in microseconds until the
+  expected shutdown of the connection.
+
+Application Protocol Error Code:
+
+: A variable-length integer containing the application-specified reason the
+  sender is shutting down; see section 20.2 of {{app-error-codes}}.
+
+Reason Phrase Length:
+
+: A variable-length integer specifying the length of the reason phrase in bytes.
+  Because a SHUTDOWN_WARNING frame cannot be split between packets, any limits
+  on packet size will also limit the space available for a reason phrase.
+
+Reason Phrase:
+
+: A human-readable explanation for why the connection is being shutdown. This can be
+  zero length if the sender chooses not to give details beyond the Error Code.
+  This SHOULD be a UTF-8 encoded string {{!RFC3629}}.
+
+
+SHUTDOWN_WARNING frames are ack-eliciting and are subject to congestion control. Their loss does
+require retransmission.
+
+## Sending SHUTDOWN_WARNING frames {#sending}
+
+TBD
+
+## Receiving SHUTDOWN_WARNING frames {#receiving}
+
+TBD
+
+# Discussion
+
+TBD
+
+# Security Considerations
+
+TBD
+
+# IANA Considerations
+
+This document registers a new value in the QUIC Transport Parameter
+Registry:
+
+   Value:  TBD (using value 0x5d0 in early deployments)
+
+   Parameter Name:  enable_timestamp
+
+   Specification:  Indicates that the endpoint supports SHUTDOWN_WARNING frames 
+
+This document also registers a new value in the QUIC Frame Type registry:
+
+   Value:  TBD (using value 0x5d0 in early deployments)
+
+   Frame Name:  SHUTDOWN_WARNING 
+
+   Specification:  warning that the connection will be shutdown in the specified delay,
+
+# Acknowledgements
+
+Thanks to TBD
+
+
+
+
+
+   
+
+
+
+
+--- back
+
+
+
+
+
+
+
+
+
+
