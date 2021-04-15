@@ -14,7 +14,7 @@ kw: Internet-Draft
 coding: us-ascii
 pi: [toc, sortrefs, symrefs, comments]
 
-author:
+authors:
       -
         ins: C. Huitema
         name: Christian Huitema
@@ -24,6 +24,11 @@ author:
         code: WA 98250
         country: U.S.A
         email: huitema@huitema.net
+        
+        ins: V. Stewart
+        name: Victor Stewart
+        org: Nametag Inc.
+        email: v@nametag.social
 
 --- abstract
 
@@ -137,7 +142,15 @@ TBD
 
 # Discussion
 
-TBD
+In the age of continuous integration and the elastic load-based scaling of compute resources, it is often the server choosing when to terminate connections with clients.
+
+But regardless of which peer initiates termination, an orderly shutdown procedure must occur at the application level to prevent data loss and either peer being left in an intermediate state, by negotiating each peer to its terminal state.
+
+The SHUTDOWN_WARNING frame provides a transport level mechanism to initiate such an application-defined negotiation with a peer. 
+
+Though such negotiation must always occur at the application level, this frame provides an application agnostic trigger. And exposing knowledge of the impending shutdown to the transport layer allows it to take certain preparatory and defensive actions in the interest of the application above.
+
+These actions could involve preventing the opening of new streams, limiting communication on existing streams in time or resources, or weaving deadline timeouts into regular transport wake ups. A library implementer is free to build and expose various knobs to the application to allow it to restrict and direct transport’s involvement in the orderly shutdown.
 
 # Security Considerations
 
