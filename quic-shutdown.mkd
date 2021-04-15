@@ -15,7 +15,8 @@ coding: us-ascii
 pi: [toc, sortrefs, symrefs, comments]
 
 authors:
-      -
+      
+      
         ins: C. Huitema
         name: Christian Huitema
         org: Private Octopus Inc.
