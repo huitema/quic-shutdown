@@ -44,11 +44,20 @@ transport parameter for negotiating the use of this extension frame.
 
 # Introduction
 
-The QUIC Transport Protocol {{!I-D.ietf-quic-transport}} provides a
+The QUIC Transport Protocol {{!RFC9000}} provides a
 secure, multiplexed connection for transmitting reliable streams of
-application data. 
+application data. QUIC can support multiple applications, some of
+which benefit from long duration connections. Servers sometimes need
+to voluntarily close these connections, for example when a given
+server instance needs to shut down its processes before updating
+code or configuration parameters and restarting. The proposed
+shutdown extension enables servers to notify clients of an
+imminent shutdown, thus allowing clients to close the
+connections in an orderly manner and reestablish them with
+minimal delays.
 
-TODO: tell us about what
+The frame type and transport parameters defined for this extension are
+specified in {{specification}}. 
 
 ## Terms and Definitions
 
@@ -135,27 +144,69 @@ require retransmission.
 
 ## Sending SHUTDOWN_WARNING frames {#sending}
 
-TBD
+SHUTDOWN_WARNING frames MUST only be sent inside 1RTT protected packets. Sending
+these frames in other types of packets is a protocol violation.
+
+SHUTDOWN_WARNING frames are primarily designed to be sent by servers. (TODO: is that
+necessary.)
+
+Servers should send only one SHUTDOWN_WARNING frame per connection.
+
+The frame is nominally sent by the application. In many cases, the application will
+be prompted to enter the shutdown mode by some kind of local event. The application
+reflects the nature of the event in the Application Protocol error code and the
+optional reason phrase.
+
+TODO: should the server explicitly close the connection after the shutdown delay, or
+can it jut go away?
+
 
 ## Receiving SHUTDOWN_WARNING frames {#receiving}
 
-TBD
+SHUTDOWN_WARNING frames are supposedly sent just once, but packet losses and
+error corrections could result in multiple frames being received by the transport.
+The receiver only considers the first received frame, and ignores any additional
+copy.
+
+Upon reception of the SHUTDOWN_FRAME, the receiver notifies the application, which
+takes appropriate actions as specified by the application protocol. Typical
+actions could be to complete ongoing transactions, abstain from starting new
+ones, and closing the connection.
+
+TODO: should clients close the connection explicitly, or is it OK to just go away
+as soon as ongoing transactions are finished?
+
+## Reestablishing connections after shutdown {#restart}
+
+TODO: discuss that. Do we have a thundering herd problem? Should the server
+specify a restart delay? Should that be a specific delay, posibly set to 
+different values for different clients, or something like a restart interval,
+in which clients pick random values?
 
 # Discussion
 
-In the age of continuous integration and the elastic load-based scaling of compute resources, it is often the server choosing when to terminate connections with clients.
+In the age of continuous integration and the elastic load-based scaling of compute resources,
+it is often the server choosing when to terminate connections with clients.
+Regardless of which peer initiates termination, an orderly shutdown procedure must occur
+at the application level to prevent data loss and either peer being left in an intermediate state,
+by negotiating each peer to its terminal state.
 
-But regardless of which peer initiates termination, an orderly shutdown procedure must occur at the application level to prevent data loss and either peer being left in an intermediate state, by negotiating each peer to its terminal state.
+The SHUTDOWN_WARNING frame provides a transport level mechanism to initiate such an
+application-defined negotiation with a peer. 
 
-The SHUTDOWN_WARNING frame provides a transport level mechanism to initiate such an application-defined negotiation with a peer. 
+Though such negotiation must always occur at the application level, this frame provides an
+application agnostic trigger. Exposing knowledge of the impending shutdown to the transport layer
+allows it to take certain preparatory and defensive actions in the interest of the application above.
 
-Though such negotiation must always occur at the application level, this frame provides an application agnostic trigger. And exposing knowledge of the impending shutdown to the transport layer allows it to take certain preparatory and defensive actions in the interest of the application above.
-
-These actions could involve preventing the opening of new streams, limiting communication on existing streams in time or resources, or weaving deadline timeouts into regular transport wake ups. A library implementer is free to build and expose various knobs to the application to allow it to restrict and direct transport’s involvement in the orderly shutdown.
+These actions could involve preventing the opening of new streams, limiting communication on
+existing streams in time or resources, or weaving deadline timeouts into regular transport wake ups.
+A library implementer is free to build and expose various knobs to the application to allow it to
+restrict and direct transport’s involvement in the orderly shutdown.
 
 # Security Considerations
 
-TBD
+Shutting down a server can be pretty disruptive. Implementations MUST ensure that this
+function is only initiated by authorized agents.
 
 # IANA Considerations
 
@@ -176,23 +227,11 @@ This document also registers a new value in the QUIC Frame Type registry:
 
    Specification:  warning that the connection will be shutdown in the specified delay,
 
+--- back
+
 # Acknowledgements
 
 Thanks to TBD
-
-
-
-
-
-   
-
-
-
-
---- back
-
-
-
 
 
 
